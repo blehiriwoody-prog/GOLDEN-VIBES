@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Golden Vibes Party – Vérification</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; min-height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; padding: 1rem; overflow: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 60% 40% at 20% 80%, rgba(212,175,55,0.18) 0%, transparent 70%), radial-gradient(ellipse 50% 50% at 80% 20%, rgba(212,175,55,0.12) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .star { position: absolute; background: #D4AF37; border-radius: 50%; animation: twinkle linear infinite; }
+    @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1); } }
+    .card { position: relative; z-index: 1; background: linear-gradient(160deg, #111 0%, #0a0a0a 50%, #111 100%); border: 1px solid rgba(212,175,55,0.35); border-radius: 4px; padding: 2.5rem 2rem 2rem; max-width: 400px; width: 100%; text-align: center; }
+    .card::before, .card::after { content: ''; position: absolute; width: 40px; height: 40px; border-color: #D4AF37; border-style: solid; opacity: 0.6; }
+    .card::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+    .card::after { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+    .corner-tr, .corner-bl { position: absolute; width: 40px; height: 40px; border-color: #D4AF37; border-style: solid; opacity: 0.6; }
+    .corner-tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: 10px; left: 10px; border-width: 0 0 2px 2px; }
+    .gold-line { height: 1px; background: linear-gradient(90deg, transparent, #D4AF37, transparent); margin: 1.25rem auto; width: 80%; }
+    .label { font-size: 10px; letter-spacing: 4px; color: rgba(212,175,55,0.6); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .event-title { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; color: #fff; }
+    .event-title span { color: #D4AF37; font-style: italic; }
+    .party-text { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; font-style: italic; color: #D4AF37; margin-bottom: 6px; }
+    .event-details { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.8; margin-bottom: 1.25rem; }
+    .event-details strong { color: rgba(212,175,55,0.8); }
+    #loading { color: rgba(212,175,55,0.5); font-size: 13px; letter-spacing: 1px; padding: 1.5rem 0; }
+    .status-block { display: none; padding: 1.25rem 0 0.5rem; }
+    .icon-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 32px; }
+    .icon-ok { background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); }
+    .icon-err { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); }
+    .guest-name { font-family: 'Playfair Display', serif; font-size: 22px; color: #D4AF37; font-style: italic; margin-bottom: 4px; }
+    .guest-code { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 2px; margin-bottom: 1.25rem; }
+    .badge { display: inline-block; padding: 9px 24px; border-radius: 2px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+    .badge-ok { background: rgba(212,175,55,0.12); color: #D4AF37; border: 1px solid rgba(212,175,55,0.4); }
+    .badge-err { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.3); }
+    .dress-code { margin-top: 1.5rem; font-size: 10px; letter-spacing: 3px; color: rgba(212,175,55,0.4); text-transform: uppercase; }
+  </style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="card">
+  <div class="corner-tr"></div><div class="corner-bl"></div>
+  <p class="label">You are invited to</p>
+  <div class="gold-line"></div>
+  <p class="event-title">Golden <span>Vibes</span></p>
+  <p class="party-text">Party</p>
+  <div class="gold-line"></div>
+  <div class="event-details">
+    <strong>04 July 2026, 06 PM</strong><br>
+    Xizang Resto Lounge · Angré
+  </div>
+  <div class="gold-line"></div>
+  <div id="loading">Vérification en cours…</div>
+  <div class="status-block" id="ok">
+    <div class="icon-circle icon-ok">✦</div>
+    <p class="guest-name" id="guest-name"></p>
+    <p class="guest-code" id="guest-code"></p>
+    <span class="badge badge-ok">✓ Accès autorisé</span>
+  </div>
+  <div class="status-block" id="err">
+    <div class="icon-circle icon-err">✗</div>
+    <p style="font-family:'Playfair Display',serif; font-size:18px; color:#fff; margin-bottom:8px;">Invitation invalide</p>
+    <p style="font-size:12px; color:rgba(255,255,255,0.35); margin-bottom:1.25rem;">Ce billet n'existe pas<br>ou a déjà été utilisé.</p>
+    <span class="badge badge-err">✗ Accès refusé</span>
+  </div>
+  <p class="dress-code">Dress code · Black &amp; Gold</p>
+</div>
+
+<script>
+  const stars = document.getElementById("stars");
+  for (let i = 0; i < 50; i++) {
+    const s = document.createElement("div");
+    s.className = "star";
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-duration:${Math.random()*4+2}s;animation-delay:${Math.random()*5}s`;
+    stars.appendChild(s);
+  }
+</script>
+
+<script type="module">
+  import { db, collection, query, where, getDocs } from "./firebase.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const code = (params.get("code") || "").trim().toUpperCase();
+
+  async function verifier() {
+    document.getElementById("loading").style.display = "block";
+    if (!code) { show("err"); return; }
+    try {
+      const q = query(collection(db, "invites"), where("code", "==", code));
+      const snap = await getDocs(q);
+      document.getElementById("loading").style.display = "none";
+      if (snap.empty) { show("err"); return; }
+      const data = snap.docs[0].data();
+      if (data.valide === false) { show("err"); return; }
+      document.getElementById("guest-name").textContent = data.nom;
+      document.getElementById("guest-code").textContent = data.code;
+      show("ok");
+    } catch (e) {
+      document.getElementById("loading").textContent = "Erreur de connexion";
+    }
+  }
+
+  function show(id) {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById(id).style.display = "block";
+  }
+
+  verifier();
+</script>
+</body>
+</html>

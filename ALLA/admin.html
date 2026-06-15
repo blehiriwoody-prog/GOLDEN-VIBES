@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin – Golden Vibes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: radial-gradient(circle at top, #1a1a1a, #000); color: white; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
+    .container { width: 100%; max-width: 580px; }
+    h1 { font-family: 'Playfair Display', serif; color: #D4AF37; text-align: center; font-size: 28px; margin-bottom: 4px; }
+    .sub { text-align: center; font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 2rem; }
+    .card { background: rgba(0,0,0,0.6); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+    input { width: 100%; padding: 10px 12px; border-radius: 4px; border: 1px solid rgba(212,175,55,0.3); background: #111; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; outline: none; margin-bottom: 10px; }
+    input:focus { border-color: rgba(212,175,55,0.6); }
+    input::placeholder { color: rgba(255,255,255,0.2); }
+    .btn { width: 100%; padding: 11px; background: #D4AF37; color: black; border: none; border-radius: 4px; font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 13px; cursor: pointer; letter-spacing: 1px; }
+    .btn:hover { background: #e8c84a; }
+    .section-title { font-size: 10px; letter-spacing: 3px; color: rgba(212,175,55,0.5); text-transform: uppercase; margin-bottom: 1rem; }
+    .guest-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .guest-avatar { width: 36px; height: 36px; background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #D4AF37; font-weight: 600; flex-shrink: 0; }
+    .guest-info { flex: 1; }
+    .guest-name { font-size: 14px; font-weight: 500; color: #fff; margin-bottom: 2px; }
+    .guest-code { font-size: 11px; color: rgba(212,175,55,0.5); letter-spacing: 1px; }
+    .del-btn { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #F87171; padding: 5px 10px; border-radius: 3px; font-size: 11px; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+    .del-btn:hover { background: rgba(239,68,68,0.1); }
+    .empty { text-align: center; color: rgba(255,255,255,0.2); font-size: 13px; padding: 1.5rem; }
+    .counter { font-size: 11px; color: rgba(212,175,55,0.5); letter-spacing: 2px; }
+    .msg { font-size: 12px; padding: 8px; border-radius: 3px; display: none; margin-top: 8px; text-align: center; }
+    .msg-ok { background: rgba(52,211,153,0.1); color: #34D399; border: 1px solid rgba(52,211,153,0.2); }
+    .msg-err { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Golden Vibes Party</h1>
+  <p class="sub">Gestion des invités</p>
+
+  <div class="card">
+    <p class="section-title">Ajouter un invité</p>
+    <input type="text" id="input-name" placeholder="Prénom et nom..." onkeydown="if(event.key==='Enter') ajouter()"/>
+    <button class="btn" onclick="ajouter()">+ Ajouter</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <p class="section-title" style="margin-bottom:0;">Liste des invités</p>
+      <span class="counter" id="counter">0 invité(s)</span>
+    </div>
+    <div id="guest-list"><div class="empty">Aucun invité pour l'instant</div></div>
+  </div>
+</div>
+
+<script type="module">
+  import { db, collection, addDoc, getDocs, deleteDoc, doc } from "./firebase.js";
+
+  const col = collection(db, "invites");
+
+  function genCode() {
+    return "INV-" + String(Math.floor(Math.random() * 90000) + 10000);
+  }
+
+  // Capitalise chaque mot : "aya koné" → "Aya Koné"
+  function capitaliser(str) {
+    return str.trim().replace(/\s+/g, " ")
+      .split(" ")
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  function initials(name) {
+    const parts = name.trim().split(" ");
+    return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
+
+  function showMsg(text, ok, nom) {
+    const el = document.getElementById("msg");
+    el.className = "msg " + (ok ? "msg-ok" : "msg-err");
+    el.style.display = "block";
+    if (ok && nom) {
+      el.innerHTML = `✓ ${nom} ajouté(e) ! &nbsp;<a href="carte.html" style="color:#D4AF37; font-weight:700; text-decoration:underline;">→ Générer sa carte</a>`;
+    } else {
+      el.textContent = text;
+      setTimeout(() => el.style.display = "none", 3000);
+    }
+  }
+
+  async function charger() {
+    const snap = await getDocs(col);
+    const list = document.getElementById("guest-list");
+    document.getElementById("counter").textContent = snap.size + " invité(s)";
+    if (snap.empty) { list.innerHTML = '<div class="empty">Aucun invité pour l\'instant</div>'; return; }
+    list.innerHTML = "";
+    snap.forEach(d => {
+      const g = d.data();
+      const div = document.createElement("div");
+      div.className = "guest-item";
+      div.innerHTML = `
+        <div class="guest-avatar">${initials(g.nom)}</div>
+        <div class="guest-info">
+          <p class="guest-name">${g.nom}</p>
+          <p class="guest-code">${g.code}</p>
+        </div>
+        <button class="del-btn" onclick="supprimer('${d.id}')">✕</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  window.ajouter = async function () {
+    const input = document.getElementById("input-name");
+    const name = capitaliser(input.value);
+    if (!name) { input.focus(); return; }
+    try {
+      await addDoc(col, { nom: name, code: genCode(), valide: true, createdAt: Date.now() });
+      input.value = "";
+      showMsg("", true, name);
+      charger();
+    } catch (e) {
+      showMsg("Erreur : " + e.message, false, null);
+    }
+  };
+
+  window.supprimer = async function (id) {
+    if (!confirm("Supprimer cet invité ?")) return;
+    await deleteDoc(doc(db, "invites", id));
+    charger();
+  };
+
+  charger();
+</script>
+</body>
+</html>

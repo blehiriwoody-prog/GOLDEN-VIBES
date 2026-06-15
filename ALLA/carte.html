@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Carte – Golden Vibes Party</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #080808; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; gap: 1.5rem; }
+    .carte { width: 360px; background: #0a0a0a; border: 1px solid rgba(212,175,55,0.4); border-radius: 6px; padding: 2.5rem 2rem; text-align: center; position: relative; }
+    .carte::before, .carte::after, .carte .c-tr, .carte .c-bl { content: ''; position: absolute; width: 28px; height: 28px; border-color: #D4AF37; border-style: solid; opacity: 0.7; }
+    .carte::before { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .carte::after { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+    .carte .c-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+    .carte .c-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+    .gold-line { height: 1px; background: linear-gradient(90deg, transparent, #D4AF37, transparent); margin: 1.25rem auto; width: 80%; }
+    .label-top { font-size: 9px; letter-spacing: 4px; color: rgba(212,175,55,0.6); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .event-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #fff; }
+    .event-title span { color: #D4AF37; font-style: italic; }
+    .party-text { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; font-style: italic; color: #D4AF37; line-height: 1; margin-bottom: 0.25rem; }
+    .invited-label { font-size: 9px; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 6px; }
+    .guest-name { font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic; color: #fff; }
+    .qr-wrap { display: flex; justify-content: center; margin: 0 auto; min-height: 50px; }
+    .scan-label { font-size: 9px; letter-spacing: 3px; color: rgba(212,175,55,0.45); text-transform: uppercase; margin-top: 10px; }
+
+    /* Panel */
+    .panel { background: #111; border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; padding: 1.25rem; width: 360px; display: flex; flex-direction: column; gap: 10px; }
+    .panel-title { font-size: 10px; letter-spacing: 3px; color: rgba(212,175,55,0.5); text-transform: uppercase; }
+    input { width: 100%; background: #1a1a1a; border: 1px solid rgba(212,175,55,0.2); border-radius: 3px; padding: 10px 12px; color: #fff; font-family: 'Montserrat', sans-serif; font-size: 13px; outline: none; }
+    input:focus { border-color: rgba(212,175,55,0.5); }
+    input::placeholder { color: rgba(255,255,255,0.2); }
+
+    /* Dropdown résultats */
+    .dropdown { background: #1a1a1a; border: 1px solid rgba(212,175,55,0.2); border-radius: 3px; display: none; max-height: 180px; overflow-y: auto; }
+    .dropdown-item { padding: 10px 12px; cursor: pointer; font-size: 13px; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+    .dropdown-item:hover { background: rgba(212,175,55,0.08); }
+    .dropdown-item .code { font-size: 11px; color: rgba(212,175,55,0.5); letter-spacing: 1px; }
+    .dropdown-empty { padding: 12px; font-size: 12px; color: rgba(255,255,255,0.3); text-align: center; }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 10px; border-radius: 3px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; border: none; text-transform: uppercase; }
+    .btn-gold { background: #D4AF37; color: #000; }
+    .btn-gold:disabled { background: rgba(212,175,55,0.3); color: rgba(0,0,0,0.5); cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid rgba(212,175,55,0.3); color: #D4AF37; }
+    .btn-outline:disabled { opacity: 0.3; cursor: not-allowed; }
+    .msg { font-size: 12px; text-align: center; padding: 8px; border-radius: 3px; display: none; letter-spacing: 0.5px; }
+    .msg-ok  { background: rgba(52,211,153,0.1); color: #34D399; border: 1px solid rgba(52,211,153,0.2); }
+    .msg-err { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
+    .msg-info { background: rgba(212,175,55,0.1); color: #D4AF37; border: 1px solid rgba(212,175,55,0.2); }
+    .back-link { font-size: 11px; color: rgba(212,175,55,0.4); text-decoration: none; letter-spacing: 1px; text-align: center; }
+    .back-link:hover { color: #D4AF37; }
+  </style>
+</head>
+<body>
+
+<!-- CARTE -->
+<div class="carte" id="carte">
+  <div class="c-tr"></div><div class="c-bl"></div>
+  <p class="label-top">You are invited to</p>
+  <p class="event-title">Golden <span>Vibes</span></p>
+  <p class="party-text">Party</p>
+  <div class="gold-line"></div>
+  <p class="invited-label">Invité(e)</p>
+  <p class="guest-name" id="guest-name">—</p>
+  <div class="gold-line"></div>
+  <div class="qr-wrap" id="qr-box"></div>
+  <p class="scan-label" id="scan-label" style="display:none;">Scanner à l'entrée</p>
+</div>
+
+<!-- PANEL -->
+<div class="panel">
+  <p class="panel-title">Rechercher un invité enregistré</p>
+  <input type="text" id="search-input" placeholder="Tapez un nom..." oninput="rechercher()" autocomplete="off"/>
+  <div class="dropdown" id="dropdown"></div>
+  <div class="btn-row">
+    <button class="btn btn-gold" id="btn-gen" onclick="genererCarte()" disabled>Générer la carte</button>
+    <button class="btn btn-outline" id="btn-dl" onclick="telecharger()" disabled>⬇ Télécharger</button>
+  </div>
+  <div class="msg" id="msg"></div>
+  <a href="index.html" class="back-link">← Retour à l'accueil</a>
+</div>
+
+<script type="module">
+  import { db, collection, getDocs, query, where } from "./firebase.js";
+
+  let selectedGuest = null; // { nom, code }
+  let allGuests = [];
+  let carteGeneree = false;
+
+  // Charger tous les invités au démarrage
+  async function chargerInvites() {
+    try {
+      const snap = await getDocs(collection(db, "invites"));
+      allGuests = [];
+      snap.forEach(d => allGuests.push(d.data()));
+    } catch(e) {
+      showMsg("Erreur de connexion Firebase", false);
+    }
+  }
+
+  // Supprime les accents pour comparer : "Koné" → "kone"
+  function normaliser(str) {
+    return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  window.rechercher = function() {
+    const val = normaliser(document.getElementById("search-input").value.trim());
+    const dd = document.getElementById("dropdown");
+
+    // Reset
+    selectedGuest = null;
+    carteGeneree = false;
+    document.getElementById("btn-gen").disabled = true;
+    document.getElementById("btn-dl").disabled = true;
+    document.getElementById("guest-name").textContent = "—";
+    document.getElementById("qr-box").innerHTML = "";
+    document.getElementById("scan-label").style.display = "none";
+
+    if (!val) { dd.style.display = "none"; return; }
+
+    const resultats = allGuests.filter(g => normaliser(g.nom).includes(val));
+    dd.innerHTML = "";
+
+    if (resultats.length === 0) {
+      dd.innerHTML = '<div class="dropdown-empty">Aucun invité trouvé — ajoutez-le d\'abord dans <a href="admin.html" style="color:#D4AF37;">Admin</a></div>';
+      dd.style.display = "block";
+      return;
+    }
+
+    resultats.forEach(g => {
+      const item = document.createElement("div");
+      item.className = "dropdown-item";
+      item.innerHTML = `<span>${g.nom}</span><span class="code">${g.code}</span>`;
+      item.onclick = () => selectionner(g);
+      dd.appendChild(item);
+    });
+    dd.style.display = "block";
+  };
+
+  function selectionner(guest) {
+    selectedGuest = guest;
+    document.getElementById("search-input").value = guest.nom;
+    document.getElementById("dropdown").style.display = "none";
+    document.getElementById("btn-gen").disabled = false;
+    showMsg("✓ " + guest.nom + " sélectionné(e)", true);
+  }
+
+  window.genererCarte = function() {
+    if (!selectedGuest) return;
+    const BASE_URL = "https://goldenvibespartyl1math-info-eco.netlify.app/invitation.html";
+    const link = BASE_URL + "?code=" + selectedGuest.code;
+
+    document.getElementById("guest-name").textContent = selectedGuest.nom;
+    const box = document.getElementById("qr-box");
+    box.innerHTML = "";
+    new QRCode(box, { text: link, width: 130, height: 130, correctLevel: QRCode.CorrectLevel.M });
+    document.getElementById("scan-label").style.display = "block";
+    document.getElementById("btn-dl").disabled = false;
+    carteGeneree = true;
+    showMsg("✓ Carte générée pour " + selectedGuest.nom, true);
+  };
+
+  window.telecharger = function() {
+    if (!carteGeneree || !selectedGuest) return;
+    html2canvas(document.getElementById("carte"), { backgroundColor: "#0a0a0a", scale: 3, useCORS: true })
+      .then(canvas => {
+        const a = document.createElement("a");
+        a.href = canvas.toDataURL("image/png");
+        a.download = "invitation_" + selectedGuest.nom.replace(/\s+/g, "_") + ".png";
+        a.click();
+      });
+  };
+
+  function showMsg(text, ok) {
+    const el = document.getElementById("msg");
+    el.textContent = text;
+    el.className = "msg " + (ok ? "msg-ok" : "msg-err");
+    el.style.display = "block";
+    setTimeout(() => el.style.display = "none", 3000);
+  }
+
+  chargerInvites();
+</script>
+</body>
+</html>
